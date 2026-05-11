@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Simpsons Cara a Cara - Springfield Edition</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Comic Neue', 'Comic Sans MS', 'Chalkboard SE', cursive;
+            background: linear-gradient(135deg, #1a5f7a 0%, #0d3b5a 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .cloud {
+            position: fixed;
+            background: rgba(255, 255, 255, 0.12);
+            border-radius: 1000px;
+            pointer-events: none;
+            z-index: 0;
+            animation: floatCloud 25s linear infinite;
+        }
+        @keyframes floatCloud {
+            from { transform: translateX(-20vw); }
+            to { transform: translateX(120vw); }
+        }
+
+        .star {
+            position: fixed;
+            background: #FFE8A0;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 0;
+            animation: twinkle 3s ease-in-out infinite;
+        }
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.15; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(1.2); }
+        }
+
+        .container {
+            position: relative;
+            z-index: 2;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .intro-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #2a6f8f 0%, #134b6b 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            transition: opacity 0.5s ease;
+        }
+        .intro-overlay.fade-out {
+            opacity: 0;
+            pointer-events: none;
+        }
+        .intro-content {
+            text-align: center;
+            animation: introPop 0.4s ease-out;
+        }
+        @keyframes introPop {
+            0% { transform: scale(0.8); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .intro-title {
+            font-size: 2.2rem;
+            color: #FED90F;
+            text-shadow: 3px 3px 0 #B87C00;
+        }
+        .intro-sub {
+            color: white;
+            font-size: 0.9rem;
+            margin-top: 8px;
+        }
+        .intro-loading {
+            width: 150px;
+            height: 3px;
+            background: rgba(255,255,255,0.3);
+            border-radius: 5px;
+            margin: 15px auto 0;
+            overflow: hidden;
+        }
+        .intro-loading-bar {
+            width: 0%;
+            height: 100%;
+            background: #FED90F;
+            animation: loadBar 0.6s ease forwards;
+        }
+        @keyframes loadBar {
+            to { width: 100%; }
+        }
+
+        .screen {
+            transition: all 0.3s ease;
+        }
+        .screen-hidden { display: none; }
+        .screen-visible { display: block; animation: fadeSlide 0.25s ease; }
+        @keyframes fadeSlide {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .springfield-header {
+            background: linear-gradient(135deg, #2d7a4d 0%, #1b5e3a 100%);
+            border-radius: 30px;
+            padding: 16px 22px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 0 #0d3b21;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .springfield-header::before { content: "🍩"; position: absolute; font-size: 50px; color: #FED90F; opacity: 0.12; left: -10px; top: -10px; }
+        .springfield-header::after { content: "★"; position: absolute; font-size: 40px; color: #FED90F; opacity: 0.12; right: 10px; bottom: -15px; }
+        .springfield-title { font-size: 1.5rem; color: #FED90F; text-shadow: 2px 2px 0 #B87C00; }
+        .springfield-subtitle { color: #FFF8E1; font-size: 0.7rem; margin-top: 4px; }
+
+        .character-card {
+            background: linear-gradient(135deg, #fff 0%, #FFF3D0 100%);
+            border-radius: 18px;
+            padding: 8px;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 0 #c2a13a;
+            cursor: pointer;
+            text-align: center;
+            border: 1px solid #FED90F;
+        }
+        .character-card:hover:not(.eliminated) { transform: translateY(-3px); box-shadow: 0 7px 0 #c2a13a; }
+        .character-card.eliminated { opacity: 0.3; filter: grayscale(0.7); transform: scale(0.95); pointer-events: none; }
+        .character-card img { 
+            width: 70px; 
+            height: 70px; 
+            object-fit: contain; 
+            margin-bottom: 5px; 
+            border-radius: 12px; 
+            background: #fff0cc;
+        }
+        @media (max-width: 600px) { .character-card img { width: 55px; height: 55px; } }
+        .character-name { font-weight: bold; color: #8B6914; font-size: 10px; padding: 3px 5px; display: inline-block; }
+
+        .btn {
+            padding: 9px 22px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 60px;
+            cursor: pointer;
+            transition: 0.1s linear;
+            font-family: inherit;
+            box-shadow: 0 3px 0 rgba(0,0,0,0.2);
+        }
+        .btn:active { transform: translateY(2px); box-shadow: 0 1px 0 rgba(0,0,0,0.2); }
+        .btn-primary { background: #0088BB; color: white; }
+        .btn-success { background: #4e8c3a; color: white; }
+        .btn-warning { background: #d98c2b; color: white; }
+        .btn-danger { background: #b33a2c; color: white; }
+        .btn-close { background: #6c757d; color: white; }
+
+        .characters-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(85px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+            max-height: 420px;
+            overflow-y: auto;
+            padding: 5px;
+        }
+        @media (max-width: 600px) { .characters-grid { grid-template-columns: repeat(auto-fill, minmax(65px, 1fr)); } }
+
+        .filter-section {
+            background: rgba(255,255,235,0.95);
+            border-radius: 18px;
+            padding: 8px;
+            margin: 10px 0;
+        }
+        .filter-header {
+            display: flex;
+            justify-content: space-between;
+            font-weight: bold;
+            color: #6b4c1a;
+            cursor: pointer;
+            padding: 4px;
+        }
+        .filter-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-top: 6px;
+        }
+        .filter-chip {
+            background: #FED90F;
+            padding: 3px 9px;
+            border-radius: 30px;
+            font-size: 0.65rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.1s;
+        }
+        .filter-chip:hover { background: #e6c200; }
+
+        .timer-box {
+            background: #2c3e2f;
+            color: #ffe484;
+            padding: 7px;
+            border-radius: 50px;
+            text-align: center;
+            font-family: monospace;
+            font-size: 1.3rem;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        .avatar-spin {
+            width: 60px;
+            height: 60px;
+            background: #FED90F;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            margin: 0 auto 8px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 25px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #2c2c2c;
+            color: #FED90F;
+            padding: 7px 16px;
+            border-radius: 40px;
+            z-index: 3000;
+            animation: fadeToast 0.2s ease;
+            font-weight: bold;
+            font-size: 0.75rem;
+        }
+        @keyframes fadeToast {
+            from { opacity: 0; transform: translateX(-50%) translateY(15px); }
+            to { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+
+        input {
+            font-family: inherit;
+            padding: 9px 14px;
+            border-radius: 50px;
+            border: 2px solid #FED90F;
+            background: white;
+            font-size: 0.85rem;
+            outline: none;
+            width: 100%;
+            margin: 6px 0;
+        }
+
+        .flex-between { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .waiting-spinner { width: 30px; height: 30px; border: 3px solid #ffe7b0; border-top-color: #FED90F; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 15px auto; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .room-card {
+            background: #FFFDF0;
+            padding: 10px;
+            border-radius: 18px;
+            margin: 8px 0;
+            cursor: pointer;
+            border: 1px solid #FED90F;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .room-card:hover { background: #FFF3D0; }
+        .turn-indicator { padding: 4px 14px; border-radius: 50px; font-weight: bold; font-size: 0.75rem; }
+        .turn-mine { background: #4e8c3a; color: white; }
+        .turn-opponent { background: #b33a2c; color: white; }
+    </style>
+</head>
+<body>
+
+<div id="introScreen" class="intro-overlay">
+    <div class="intro-content">
+        <div class="intro-title">CARA A CARA</div>
+        <div class="intro-sub">THE SIMPSONS EDITION</div>
+        <div class="intro-loading"><div class="intro-loading-bar"></div></div>
+    </div>
+</div>
+
+<div id="app"></div>
+
+<script>
+    // ============================================================
+    // 🖼️ COLOQUE AQUI OS CAMINHOS DAS SUAS IMAGENS 🖼️
+    // ============================================================
+    // Substitua os links abaixo pelos caminhos das suas imagens.
+    // Exemplos:
+    //   "imagens/homer.png"
+    //   "fotos/marge.jpg"
+    //   "https://meusite.com/bart.png"
+    // ============================================================
+    
+    const IMAGENS_PERSONAGENS = {
+        1: "simps/homer.png",  // Homer
+        2: "simps/marge.png",  // Marge
+        3: "simps/bart.png",  // Bart
+        4: "simps/lisa.png",  // Lisa
+        5: "simps/maggie.png",  // Maggie
+        6: "simps/moe.png",  // Moe
+        7: "simps/ned.png",  // Ned Flanders
+        8: "simps/krusty.png",  // Krusty
+        9: "simps/burns.png",  // Mr. Burns
+        10: "simps/nelson.png", // Nelson
+        11: "simps/Millhouse.png", // Milhouse
+        12: "simps/APU.png", // Apu
+        13: "simps/chefe.png", // Chief Wiggum
+        14: "simps/skinner.png", // Skinner
+        15: "simps/ralph.png", // Ralph
+        16: "simps/cara guy.png", // Comic Guy
+        17: "simps/frink.png", // Frink
+        18: "simps/patty.png", // Patty
+        19: "simps/selma.png", // Selma
+        20: "simps/willie.png"  // Willie
+    };
+
+    // Se você quiser usar imagens locais, faça assim:
+    // const IMAGENS_PERSONAGENS = {
+    //     1: "minhas_imagens/homer.png",
+    //     2: "minhas_imagens/marge.jpg",
+    //     3: "minhas_imagens/bart.webp",
+    //     ...
+    // };
+
+    // ==================== PERSONAGENS ====================
+    const PERSONAGENS = [
+        { id: 1, nome: 'Homer Simpson', genero: 'M', idade: 'adulto', oculos: false, cabelo: 'careca', roupa: 'branco', acessorio: 'cerveja', profissao: 'seguranca', familia: true },
+        { id: 2, nome: 'Marge Simpson', genero: 'F', idade: 'adulto', oculos: false, cabelo: 'azul_alto', roupa: 'verde', acessorio: 'colar', profissao: 'dona_de_casa', familia: true },
+        { id: 3, nome: 'Bart Simpson', genero: 'M', idade: 'crianca', oculos: false, cabelo: 'espetado', roupa: 'laranja', acessorio: 'estilingue', profissao: 'estudante', familia: true },
+        { id: 4, nome: 'Lisa Simpson', genero: 'F', idade: 'crianca', oculos: false, cabelo: 'estrela', roupa: 'vermelho', acessorio: 'saxofone', profissao: 'estudante', familia: true },
+        { id: 5, nome: 'Maggie Simpson', genero: 'F', idade: 'bebe', oculos: false, cabelo: 'pequeno', roupa: 'azul', acessorio: 'chupeta', profissao: 'bebe', familia: true },
+        { id: 6, nome: 'Moe Szyslak', genero: 'M', idade: 'adulto', oculos: false, cabelo: 'careca', roupa: 'camisa', acessorio: 'copo', profissao: 'barman', familia: false },
+        { id: 7, nome: 'Ned Flanders', genero: 'M', idade: 'adulto', oculos: true, cabelo: 'castanho', roupa: 'verde', acessorio: 'biblia', profissao: 'lojista', familia: false },
+        { id: 8, nome: 'Krusty', genero: 'M', idade: 'adulto', oculos: false, cabelo: 'verde', roupa: 'colorido', acessorio: 'chocalho', profissao: 'palhaco', familia: false },
+        { id: 9, nome: 'Mr. Burns', genero: 'M', idade: 'idoso', oculos: false, cabelo: 'careca', roupa: 'cinza', acessorio: 'urso', profissao: 'empresario', familia: false },
+        { id: 10, nome: 'Nelson Muntz', genero: 'M', idade: 'crianca', oculos: false, cabelo: 'azul', roupa: 'camisa', acessorio: 'bone', profissao: 'estudante', familia: false },
+        { id: 11, nome: 'Milhouse', genero: 'M', idade: 'crianca', oculos: true, cabelo: 'azul', roupa: 'azul', acessorio: 'quadrinhos', profissao: 'estudante', familia: false },
+        { id: 12, nome: 'Apu', genero: 'M', idade: 'adulto', oculos: false, cabelo: 'preto', roupa: 'branco', acessorio: 'turbante', profissao: 'lojista', familia: false },
+        { id: 13, nome: 'Chief Wiggum', genero: 'M', idade: 'adulto', oculos: false, cabelo: 'careca', roupa: 'azul', acessorio: 'distintivo', profissao: 'policial', familia: false },
+        { id: 14, nome: 'Skinner', genero: 'M', idade: 'adulto', oculos: false, cabelo: 'ralo', roupa: 'marrom', acessorio: 'gravata', profissao: 'diretor', familia: false },
+        { id: 15, nome: 'Ralph Wiggum', genero: 'M', idade: 'crianca', oculos: false, cabelo: 'espetado', roupa: 'amarelo', acessorio: 'massinha', profissao: 'estudante', familia: false },
+        { id: 16, nome: 'Comic Guy', genero: 'M', idade: 'adulto', oculos: true, cabelo: 'escuro', roupa: 'roxo', acessorio: 'quadrinhos', profissao: 'lojista', familia: false },
+        { id: 17, nome: 'Professor Frink', genero: 'M', idade: 'adulto', oculos: true, cabelo: 'careca', roupa: 'branco', acessorio: 'aparelhos', profissao: 'cientista', familia: false },
+        { id: 18, nome: 'Patty Bouvier', genero: 'F', idade: 'adulto', oculos: false, cabelo: 'azul', roupa: 'verde', acessorio: 'cigarro', profissao: 'funcionaria', familia: false },
+        { id: 19, nome: 'Selma Bouvier', genero: 'F', idade: 'adulto', oculos: false, cabelo: 'azul', roupa: 'verde', acessorio: 'cigarro', profissao: 'funcionaria', familia: false },
+        { id: 20, nome: 'Groundskeeper Willie', genero: 'M', idade: 'adulto', oculos: false, cabelo: 'ruivo', roupa: 'verde', acessorio: 'ancora', profissao: 'zelador', familia: false }
+    ];
+
+    // ==================== PERGUNTAS ====================
+    const PERGUNTAS = [
+        { texto: '👤 É homem?', verificar: c => c.genero === 'M' },
+        { texto: '👤 É mulher?', verificar: c => c.genero === 'F' },
+        { texto: '📅 É adulto?', verificar: c => c.idade === 'adulto' },
+        { texto: '📅 É criança?', verificar: c => c.idade === 'crianca' },
+        { texto: '📅 É bebê?', verificar: c => c.idade === 'bebe' },
+        { texto: '📅 É idoso?', verificar: c => c.idade === 'idoso' },
+        { texto: '👓 Usa óculos?', verificar: c => c.oculos === true },
+        { texto: '💇 É careca?', verificar: c => c.cabelo === 'careca' },
+        { texto: '💇 Tem cabelo azul?', verificar: c => c.cabelo === 'azul' || c.cabelo === 'azul_alto' },
+        { texto: '💇 Tem cabelo espetado?', verificar: c => c.cabelo === 'espetado' },
+        { texto: '👕 Roupa azul?', verificar: c => c.roupa === 'azul' },
+        { texto: '👕 Roupa vermelha?', verificar: c => c.roupa === 'vermelho' },
+        { texto: '👕 Roupa verde?', verificar: c => c.roupa === 'verde' },
+        { texto: '👕 Roupa branca?', verificar: c => c.roupa === 'branco' },
+        { texto: '🎭 É da família Simpson?', verificar: c => c.familia === true },
+        { texto: '🍺 Tem acessório de bebida?', verificar: c => c.acessorio === 'cerveja' || c.acessorio === 'copo' },
+        { texto: '🎷 Tem instrumento musical?', verificar: c => c.acessorio === 'saxofone' },
+        { texto: '👮 É policial?', verificar: c => c.profissao === 'policial' },
+        { texto: '📚 É estudante?', verificar: c => c.profissao === 'estudante' },
+        { texto: '🏪 Trabalha em loja?', verificar: c => c.profissao === 'lojista' }
+    ];
+
+    let usuarioAtual = null;
+    let usuarios = JSON.parse(localStorage.getItem('simpsons_usuarios') || '[]');
+    
+    let jogoRobo = { ativo: false, secreto: null, disponiveis: [], tempo: 65, intervalo: null };
+    let jogoOnline = { ativo: false, salaId: null, souCriador: false, segredoId: null, oponenteNome: '', minhaVez: false, idsOponente: [], intervalo: null, intervaloEspera: null };
+
+    function mostrarToast(msg) { 
+        const t = document.createElement('div'); 
+        t.className = 'toast'; 
+        t.innerText = msg; 
+        document.body.appendChild(t); 
+        setTimeout(() => t.remove(), 2000); 
+    }
+    function salvarUsuarios() { localStorage.setItem('simpsons_usuarios', JSON.stringify(usuarios)); }
+    function setUsuario(user) { usuarioAtual = user; localStorage.setItem('simpsons_atual', JSON.stringify(user)); }
+
+    const app = document.getElementById('app');
+
+    setTimeout(() => {
+        const intro = document.getElementById('introScreen');
+        if (intro) { intro.classList.add('fade-out'); setTimeout(() => intro.remove(), 500); }
+    }, 800);
+
+    // Função para obter imagem do personagem (usa suas imagens configuradas)
+    function getImagemPersonagem(id) {
+        return IMAGENS_PERSONAGENS[id] || null;
+    }
+
+    // ==================== TELAS ====================
+    function telaPrincipal() {
+        app.innerHTML = `<div class="container screen screen-visible"><div class="springfield-header"><div class="springfield-title">CARA A CARA</div><div class="springfield-subtitle">The Simpsons Edition</div></div><div style="text-align:center; padding:20px;"><button class="btn btn-primary" id="btnJogar">🎮 JOGAR</button></div></div>`;
+        document.getElementById('btnJogar')?.addEventListener('click', () => {
+            const salvo = localStorage.getItem('simpsons_atual');
+            salvo ? (usuarioAtual = JSON.parse(salvo), telaPerfil()) : telaLogin();
+        });
+    }
+
+    function telaLogin() {
+        app.innerHTML = `<div class="container screen screen-visible"><div class="springfield-header"><div class="springfield-title">ENTRAR</div></div><div style="text-align:center; padding:20px;"><div class="avatar-spin">🍩</div><input type="text" id="loginNome" placeholder="Nome"><input type="password" id="loginSenha" placeholder="Senha"><button class="btn btn-primary" id="btnEntrar">Entrar</button><button class="btn btn-warning" id="btnCadastrar">Criar Conta</button></div></div>`;
+        document.getElementById('btnEntrar')?.addEventListener('click', () => {
+            const nome = document.getElementById('loginNome').value.trim();
+            const senha = document.getElementById('loginSenha').value;
+            const user = usuarios.find(u => u.nome === nome && u.senha === senha);
+            if (user) { setUsuario(user); telaPerfil(); }
+            else mostrarToast('Nome ou senha incorretos');
+        });
+        document.getElementById('btnCadastrar')?.addEventListener('click', telaRegistro);
+    }
+
+    function telaRegistro() {
+        app.innerHTML = `<div class="container screen screen-visible"><div class="springfield-header"><div class="springfield-title">CRIAR PERFIL</div></div><div style="text-align:center; padding:20px;"><div id="avatarPrev" class="avatar-spin">😀</div><div style="margin:5px 0;">${['😀','🍩','🛹','🎷','🍺','👮','🤓','🐱'].map(e => `<span style="font-size:1.6rem; margin:3px; cursor:pointer;" onclick="document.getElementById('avatarPrev').innerText='${e}'">${e}</span>`).join('')}</div><input type="text" id="regNome" placeholder="Nome"><input type="password" id="regSenha" placeholder="Senha"><button class="btn btn-success" id="btnRegistrar">Criar</button><button class="btn btn-close" id="btnVoltarLogin">Voltar</button></div></div>`;
+        document.getElementById('btnRegistrar')?.addEventListener('click', () => {
+            const nome = document.getElementById('regNome').value.trim();
+            const senha = document.getElementById('regSenha').value;
+            const avatar = document.getElementById('avatarPrev').innerText;
+            if (!nome || !senha) return mostrarToast('Preencha tudo');
+            if (usuarios.find(u => u.nome === nome)) return mostrarToast('Nome já existe');
+            usuarios.push({ nome, senha, avatar, pontos: 0 });
+            salvarUsuarios();
+            setUsuario({ nome, senha, avatar, pontos: 0 });
+            telaPerfil();
+        });
+        document.getElementById('btnVoltarLogin')?.addEventListener('click', telaLogin);
+    }
+
+    function telaPerfil() {
+        app.innerHTML = `<div class="container screen screen-visible"><div class="springfield-header"><div class="springfield-title">PERFIL</div></div><div style="text-align:center; padding:20px;"><div class="avatar-spin">${usuarioAtual.avatar}</div><h3>${usuarioAtual.nome}</h3><p>⭐ 5 AMIGOS ⭐</p><p>🏆 PONTOS: ${usuarioAtual.pontos || 0}</p><div style="margin:15px 0;"><button class="btn btn-primary" id="btnOnline">🌍 JOGAR ONLINE</button></div><button class="btn btn-success" id="btnRobo">🤖 VS ROBÔ</button><button class="btn btn-danger" id="btnSair" style="margin-top:12px;">Sair</button></div></div>`;
+        document.getElementById('btnOnline')?.addEventListener('click', lobbyOnline);
+        document.getElementById('btnRobo')?.addEventListener('click', iniciarRobo);
+        document.getElementById('btnSair')?.addEventListener('click', () => { localStorage.removeItem('simpsons_atual'); telaPrincipal(); });
+    }
+
+    // ==================== MODO ROBÔ ====================
+    async function iniciarRobo() {
+        if (jogoRobo.intervalo) clearInterval(jogoRobo.intervalo);
+        const aleatorio = Math.floor(Math.random() * PERSONAGENS.length);
+        jogoRobo = { ativo: true, secreto: { ...PERSONAGENS[aleatorio] }, disponiveis: PERSONAGENS.map(c => ({ ...c })), tempo: 65, intervalo: null };
+        jogoRobo.intervalo = setInterval(() => {
+            if (!jogoRobo.ativo) return;
+            jogoRobo.tempo--;
+            const timerEl = document.getElementById('timerRobo');
+            if (timerEl) { let m = Math.floor(jogoRobo.tempo/60), s = jogoRobo.tempo%60; timerEl.innerText = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`; }
+            if (jogoRobo.tempo <= 0) { clearInterval(jogoRobo.intervalo); jogoRobo.ativo = false; fimDeJogo(false, 'Tempo esgotado!', jogoRobo.secreto.nome); }
+        }, 1000);
+        await renderizarRobo();
+    }
+
+    async function renderizarRobo() {
+        let gridHtml = '';
+        for (const p of jogoRobo.disponiveis) {
+            const imgUrl = getImagemPersonagem(p.id);
+            gridHtml += `<div class="character-card" onclick="eliminarRobo(${p.id})"><img src="${imgUrl || 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ccircle cx=%2250%22 cy=%2250%22 r=%2245%22 fill=%22%23FED90F%22/%3E%3Ctext x=%2250%22 y=%2270%22 text-anchor=%22middle%22 fill=%22%238B6914%22 font-size=%2240%22%3E' + p.nome.charAt(0) + '%3C/text%3E%3C/svg%3E'}" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ccircle cx=%2250%22 cy=%2250%22 r=%2245%22 fill=%22%23FED90F%22/%3E%3Ctext x=%2250%22 y=%2270%22 text-anchor=%22middle%22 fill=%22%238B6914%22 font-size=%2240%22%3E${p.nome.charAt(0)}%3C/text%3E%3C/svg%3E'"><div class="character-name">${p.nome}</div></div>`;
+        }
+        app.innerHTML = `<div class="container screen screen-visible"><div class="springfield-header"><div class="springfield-title">🤖 VS ROBÔ</div></div><div style="padding:15px;"><div class="timer-box" id="timerRobo">01:05</div><div class="flex-between"><span><strong>🎯 Personagens:</strong> <span id="totalRestante">${jogoRobo.disponiveis.length}</span></span><button class="btn btn-warning" id="btnAdivinhar">❓ Já sei quem é?</button></div><div class="characters-grid" id="gridRobo">${gridHtml}</div><div class="filter-section"><div class="filter-header" onclick="this.parentElement.classList.toggle('open')"><span>❓ FAZER PERGUNTA</span><span>▼</span></div><div class="filter-options" id="areaPerguntas">${PERGUNTAS.map((q,i) => `<span class="filter-chip" onclick="perguntarRobo(${i})">${q.texto}</span>`).join('')}</div></div><button class="btn btn-danger" id="btnSairRobo">Sair do Jogo</button></div></div>`;
+        document.getElementById('btnAdivinhar')?.addEventListener('click', () => { let palpite = prompt('Digite o nome:'); if(palpite && palpite.toLowerCase().trim() === jogoRobo.secreto.nome.toLowerCase()) fimDeJogo(true, 'Acertou!', jogoRobo.secreto.nome); else fimDeJogo(false, `Errou! Era ${jogoRobo.secreto.nome}`, jogoRobo.secreto.nome); });
+        document.getElementById('btnSairRobo')?.addEventListener('click', () => { if(jogoRobo.intervalo) clearInterval(jogoRobo.intervalo); telaPerfil(); });
+        window.eliminarRobo = async (id) => {
+            if (!jogoRobo.ativo) return;
+            if (id === jogoRobo.secreto.id) fimDeJogo(true, 'Acertou o personagem!', jogoRobo.secreto.nome);
+            else { jogoRobo.disponiveis = jogoRobo.disponiveis.filter(p => p.id !== id); await atualizarGridRobo(); if (jogoRobo.disponiveis.length === 0) fimDeJogo(false, 'Eliminou todos!', jogoRobo.secreto.nome); else if (jogoRobo.disponiveis.length === 1 && jogoRobo.disponiveis[0].id === jogoRobo.secreto.id) fimDeJogo(true, 'Vitória!', jogoRobo.secreto.nome); }
+        };
+        window.perguntarRobo = async (idx) => {
+            if (!jogoRobo.ativo) return;
+            const pergunta = PERGUNTAS[idx];
+            const resultado = pergunta.verificar(jogoRobo.secreto);
+            mostrarToast(`${pergunta.texto} → ${resultado ? 'SIM ✅' : 'NÃO ❌'}`);
+            if (!resultado) jogoRobo.disponiveis = jogoRobo.disponiveis.filter(p => !pergunta.verificar(p));
+            await atualizarGridRobo();
+            if (jogoRobo.disponiveis.length === 0) fimDeJogo(false, 'Eliminou todos!', jogoRobo.secreto.nome);
+            else if (jogoRobo.disponiveis.length === 1 && jogoRobo.disponiveis[0].id === jogoRobo.secreto.id) fimDeJogo(true, 'Vitória!', jogoRobo.secreto.nome);
+        };
+    }
+
+    async function atualizarGridRobo() {
+        const grid = document.getElementById('gridRobo');
+        const restanteSpan = document.getElementById('totalRestante');
+        if (restanteSpan) restanteSpan.innerText = jogoRobo.disponiveis.length;
+        if (grid) {
+            let novaGrid = '';
+            for (const p of jogoRobo.disponiveis) {
+                const imgUrl = getImagemPersonagem(p.id);
+                novaGrid += `<div class="character-card" onclick="eliminarRobo(${p.id})"><img src="${imgUrl || 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ccircle cx=%2250%22 cy=%2250%22 r=%2245%22 fill=%22%23FED90F%22/%3E%3Ctext x=%2250%22 y=%2270%22 text-anchor=%22middle%22 fill=%22%238B6914%22 font-size=%2240%22%3E' + p.nome.charAt(0) + '%3C/text%3E%3C/svg%3E'}" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ccircle cx=%2250%22 cy=%2250%22 r=%2245%22 fill=%22%23FED90F%22/%3E%3Ctext x=%2250%22 y=%2270%22 text-anchor=%22middle%22 fill=%22%238B6914%22 font-size=%2240%22%3E${p.nome.charAt(0)}%3C/text%3E%3C/svg%3E'"><div class="character-name">${p.nome}</div></div>`;
+            }
+            grid.innerHTML = novaGrid;
+        }
+    }
+
+    function fimDeJogo(venceu, mensagem, nomeSecreto) {
+        if (jogoRobo.intervalo) clearInterval(jogoRobo.intervalo);
+        jogoRobo.ativo = false;
+        if (venceu && usuarioAtual) { usuarioAtual.pontos = (usuarioAtual.pontos || 0) + 100; const idx = usuarios.findIndex(u => u.nome === usuarioAtual.nome); if(idx !== -1) usuarios[idx].pontos = usuarioAtual.pontos; salvarUsuarios(); }
+        app.innerHTML = `<div class="container screen screen-visible"><div class="springfield-header"><div class="springfield-title">${venceu ? '🏆 VITÓRIA!' : '💀 DERROTA!'}</div></div><div style="text-align:center; padding:30px;"><div style="font-size:3.5rem;">${venceu ? '🎉' : '😭'}</div><h3>${mensagem}</h3><p style="margin:15px 0;">Personagem: <strong>${nomeSecreto}</strong></p>${venceu ? '<p>+100 pontos!</p>' : ''}<button class="btn btn-success" id="btnJogarNovamente">Jogar Novamente</button><button class="btn btn-close" id="btnMenuPrincipal" style="margin-top:10px;">Menu</button></div></div>`;
+        document.getElementById('btnJogarNovamente')?.addEventListener('click', iniciarRobo);
+        document.getElementById('btnMenuPrincipal')?.addEventListener('click', telaPerfil);
+    }
+
+    // ==================== MODO ONLINE ====================
+    function lobbyOnline() {
+        app.innerHTML = `<div class="container screen screen-visible"><div class="springfield-header"><div class="springfield-title">ONLINE</div></div><div style="padding:15px; text-align:center;"><button class="btn btn-primary" id="btnCriarSala">➕ CRIAR SALA</button><div style="margin:12px 0;"><input type="text" id="codigoSala" placeholder="Código da sala" maxlength="6" style="text-transform:uppercase;"><button class="btn btn-success" id="btnEntrarSala">🔗 ENTRAR</button></div><div id="listaSalas"></div><button class="btn btn-close" id="btnVoltarPerfil">Voltar</button></div></div>`;
+        atualizarListaSalas();
+        const intervaloSalas = setInterval(atualizarListaSalas, 4000);
+        document.getElementById('btnCriarSala')?.addEventListener('click', () => { clearInterval(intervaloSalas); criarSala(); });
+        document.getElementById('btnEntrarSala')?.addEventListener('click', () => { const cod = document.getElementById('codigoSala').value.trim().toUpperCase(); if(cod) { clearInterval(intervaloSalas); entrarSala(cod); } else mostrarToast('Digite o código'); });
+        document.getElementById('btnVoltarPerfil')?.addEventListener('click', () => { clearInterval(intervaloSalas); telaPerfil(); });
+    }
+
+    function atualizarListaSalas() {
+        const salas = JSON.parse(localStorage.getItem('salas_online') || '{}');
+        const div = document.getElementById('listaSalas');
+        if (!div) return;
+        const disponiveis = Object.values(salas).filter(s => s.status === 'espera' && s.jogadores < 2);
+        if (disponiveis.length === 0) { div.innerHTML = '<p style="font-size:0.75rem;">Nenhuma sala disponível</p>'; return; }
+        div.innerHTML = disponiveis.map(s => `<div class="room-card" onclick="entrarSala('${s.codigo}')"><span>🏠 ${s.codigo}</span><span>👥 ${s.jogadores}/2</span><button class="btn" style="padding:3px 12px;">Entrar</button></div>`).join('');
+    }
+
+    function criarSala() {
+        const codigo = Math.random().toString(36).substring(2, 8).toUpperCase();
+        const aleatorio = PERSONAGENS[Math.floor(Math.random() * PERSONAGENS.length)];
+        const salas = JSON.parse(localStorage.getItem('salas_online') || '{}');
+        salas[codigo] = { codigo, criador: usuarioAtual.nome, convidado: null, segredoCriador: aleatorio.id, segredoConvidado: null, disponiveisCriador: PERSONAGENS.map(c => c.id), disponiveisConvidado: PERSONAGENS.map(c => c.id), vez: 'criador', status: 'espera', jogadores: 1, vencedor: null };
+        localStorage.setItem('salas_online', JSON.stringify(salas));
+        mostrarToast(`Sala criada! Código: ${codigo}`);
+        iniciarPartidaOnline(codigo, true, aleatorio.id);
+    }
+
+    function entrarSala(codigo) {
+        const salas = JSON.parse(localStorage.getItem('salas_online') || '{}');
+        const sala = salas[codigo];
+        if (!sala) { mostrarToast('Sala não encontrada!'); lobbyOnline(); return; }
+        if (sala.jogadores >= 2) { mostrarToast('Sala cheia!'); lobbyOnline(); return; }
+        const aleatorio = PERSONAGENS[Math.floor(Math.random() * PERSONAGENS.length)];
+        sala.convidado = usuarioAtual.nome;
+        sala.segredoConvidado = aleatorio.id;
+        sala.jogadores = 2;
+        sala.status = 'jogando';
+        localStorage.setItem('salas_online', JSON.stringify(salas));
+        iniciarPartidaOnline(codigo, false, aleatorio.id);
+    }
+
+    function iniciarPartidaOnline(salaId, souCriador, meuSegredoId) {
+        if (jogoOnline.intervalo) clearInterval(jogoOnline.intervalo);
+        if (jogoOnline.intervaloEspera) clearInterval(jogoOnline.intervaloEspera);
+        jogoOnline = { ativo: true, salaId, souCriador, segredoId: meuSegredoId, oponenteNome: '', minhaVez: souCriador, idsOponente: [], intervalo: null, intervaloEspera: null };
+        
+        if (souCriador && !JSON.parse(localStorage.getItem('salas_online') || '{}')[salaId]?.convidado) {
+            telaEsperaOnline(salaId);
+            jogoOnline.intervaloEspera = setInterval(() => {
+                const sala = JSON.parse(localStorage.getItem('salas_online') || '{}')[salaId];
+                if (sala && sala.convidado) {
+                    clearInterval(jogoOnline.intervaloEspera);
+                    iniciarPartidaOnline(salaId, souCriador, meuSegredoId);
+                }
+                if (!sala) { clearInterval(jogoOnline.intervaloEspera); telaPerfil(); }
+            }, 1000);
+            return;
+        }
+        
+        if (jogoOnline.intervaloEspera) clearInterval(jogoOnline.intervaloEspera);
+        renderizarJogoOnline();
+        jogoOnline.intervalo = setInterval(() => {
+            const sala = JSON.parse(localStorage.getItem('salas_online') || '{}')[salaId];
+            if (!sala || sala.vencedor) {
+                if (sala?.vencedor) finalizarOnline(sala.vencedor === usuarioAtual.nome, sala.vencedor);
+                else finalizarOnline(false, 'Sala encerrada');
+                return;
+            }
+            jogoOnline.minhaVez = (souCriador && sala.vez === 'criador') || (!souCriador && sala.vez === 'convidado');
+            jogoOnline.oponenteNome = souCriador ? (sala.convidado || 'Aguardando...') : sala.criador;
+            jogoOnline.idsOponente = souCriador ? (sala.disponiveisConvidado || []) : (sala.disponiveisCriador || []);
+            renderizarJogoOnline();
+        }, 800);
+    }
+
+    function telaEsperaOnline(salaId) {
+        app.innerHTML = `<div class="container screen screen-visible"><div class="springfield-header"><div class="springfield-title">🌍 ONLINE</div></div><div style="text-align:center; padding:30px;"><div class="waiting-spinner"></div><h3>Aguardando oponente...</h3><p>Código: <strong>${salaId}</strong></p><p>Compartilhe com um amigo!</p><button class="btn btn-danger" id="btnCancelarEspera">Cancelar</button></div></div>`;
+        document.getElementById('btnCancelarEspera')?.addEventListener('click', () => {
+            if (jogoOnline.intervaloEspera) clearInterval(jogoOnline.intervaloEspera);
+            const salas = JSON.parse(localStorage.getItem('salas_online') || '{}');
+            delete salas[salaId];
+            localStorage.setItem('salas_online', JSON.stringify(salas));
+            telaPerfil();
+        });
+    }
+
+    async function renderizarJogoOnline() {
+        const sala = JSON.parse(localStorage.getItem('salas_online') || '{}')[jogoOnline.salaId];
+        if (!sala) return;
+        const personagensOponente = (jogoOnline.idsOponente || []).map(id => PERSONAGENS.find(p => p.id === id)).filter(p => p);
+        let gridHtml = '';
+        for (const p of personagensOponente) {
+            const imgUrl = getImagemPersonagem(p.id);
+            gridHtml += `<div class="character-card" onclick="${jogoOnline.minhaVez && !sala.vencedor ? `eliminarOnline(${p.id})` : ''}"><img src="${imgUrl || 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ccircle cx=%2250%22 cy=%2250%22 r=%2245%22 fill=%22%23FED90F%22/%3E%3Ctext x=%2250%22 y=%2270%22 text-anchor=%22middle%22 fill=%22%238B6914%22 font-size=%2240%22%3E' + p.nome.charAt(0) + '%3C/text%3E%3C/svg%3E'}" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ccircle cx=%2250%22 cy=%2250%22 r=%2245%22 fill=%22%23FED90F%22/%3E%3Ctext x=%2250%22 y=%2270%22 text-anchor=%22middle%22 fill=%22%238B6914%22 font-size=%2240%22%3E${p.nome.charAt(0)}%3C/text%3E%3C/svg%3E'"><div class="character-name">${p.nome}</div></div>`;
+        }
+        app.innerHTML = `<div class="container screen screen-visible"><div class="springfield-header"><div class="springfield-title">🌍 ONLINE - ${jogoOnline.salaId}</div></div><div style="padding:15px;"><div class="flex-between" style="margin-bottom:10px;"><span>👤 ${usuarioAtual.nome}</span><span class="turn-indicator ${jogoOnline.minhaVez ? 'turn-mine' : 'turn-opponent'}">${jogoOnline.minhaVez ? 'SUA VEZ' : 'VEZ DO OPONENTE'}</span><span>👤 ${jogoOnline.oponenteNome}</span></div><div style="background:rgba(255,255,235,0.9); border-radius:18px; padding:12px;"><h3 style="font-size:0.9rem;">Oponente (${personagensOponente.length})</h3><div class="characters-grid" id="gridOnline">${gridHtml}</div></div><div class="filter-section"><div class="filter-header" onclick="this.parentElement.classList.toggle('open')"><span>❓ FAZER PERGUNTA</span><span>▼</span></div><div class="filter-options" id="perguntasOnline">${PERGUNTAS.map((q,i) => `<span class="filter-chip" onclick="${jogoOnline.minhaVez && !sala.vencedor ? `perguntarOnline(${i})` : ''}">${q.texto}</span>`).join('')}</div></div><button class="btn btn-danger" id="btnSairOnline">Sair</button></div></div>`;
+        document.getElementById('btnSairOnline')?.addEventListener('click', () => { cancelarOnline(); telaPerfil(); });
+        window.eliminarOnline = (id) => {
+            if (!jogoOnline.minhaVez) return;
+            const salas = JSON.parse(localStorage.getItem('salas_online') || '{}');
+            const salaUp = salas[jogoOnline.salaId];
+            if (!salaUp || salaUp.vencedor) return;
+            const segredoOponente = jogoOnline.souCriador ? salaUp.segredoConvidado : salaUp.segredoCriador;
+            if (id === segredoOponente) {
+                salaUp.vencedor = usuarioAtual.nome;
+                localStorage.setItem('salas_online', JSON.stringify(salas));
+                finalizarOnline(true, usuarioAtual.nome);
+            } else {
+                const lista = jogoOnline.souCriador ? salaUp.disponiveisConvidado : salaUp.disponiveisCriador;
+                const novaLista = lista.filter(i => i !== id);
+                if (jogoOnline.souCriador) salaUp.disponiveisConvidado = novaLista;
+                else salaUp.disponiveisCriador = novaLista;
+                salaUp.vez = jogoOnline.souCriador ? 'convidado' : 'criador';
+                localStorage.setItem('salas_online', JSON.stringify(salas));
+            }
+        };
+        window.perguntarOnline = (idx) => {
+            if (!jogoOnline.minhaVez) return;
+            const pergunta = PERGUNTAS[idx];
+            const salas = JSON.parse(localStorage.getItem('salas_online') || '{}');
+            const salaUp = salas[jogoOnline.salaId];
+            if (!salaUp || salaUp.vencedor) return;
+            const segredoOponente = jogoOnline.souCriador ? salaUp.segredoConvidado : salaUp.segredoCriador;
+            const personagemSecreto = PERSONAGENS.find(p => p.id === segredoOponente);
+            const resultado = pergunta.verificar(personagemSecreto);
+            mostrarToast(`${pergunta.texto} → ${resultado ? 'SIM ✅' : 'NÃO ❌'}`);
+            if (!resultado) {
+                const lista = jogoOnline.souCriador ? salaUp.disponiveisConvidado : salaUp.disponiveisCriador;
+                const novaLista = lista.filter(id => !pergunta.verificar(PERSONAGENS.find(p => p.id === id)));
+                if (jogoOnline.souCriador) salaUp.disponiveisConvidado = novaLista;
+                else salaUp.disponiveisCriador = novaLista;
+            }
+            salaUp.vez = jogoOnline.souCriador ? 'convidado' : 'criador';
+            localStorage.setItem('salas_online', JSON.stringify(salas));
+        };
+    }
+
+    function finalizarOnline(venceu, vencedorNome) {
+        if (jogoOnline.intervalo) clearInterval(jogoOnline.intervalo);
+        jogoOnline.ativo = false;
+        if (venceu && usuarioAtual) { usuarioAtual.pontos = (usuarioAtual.pontos || 0) + 100; const idx = usuarios.findIndex(u => u.nome === usuarioAtual.nome); if(idx !== -1) usuarios[idx].pontos = usuarioAtual.pontos; salvarUsuarios(); }
+        const salas = JSON.parse(localStorage.getItem('salas_online') || '{}');
+        delete salas[jogoOnline.salaId];
+        localStorage.setItem('salas_online', JSON.stringify(salas));
+        app.innerHTML = `<div class="container screen screen-visible"><div class="springfield-header"><div class="springfield-title">${venceu ? '🏆 VITÓRIA!' : '💀 DERROTA!'}</div></div><div style="text-align:center; padding:30px;"><div style="font-size:3.5rem;">${venceu ? '🎉' : '😭'}</div><h3>${venceu ? 'Você venceu!' : `${vencedorNome} venceu!`}</h3>${venceu ? '<p>+100 pontos!</p>' : ''}<button class="btn btn-success" id="btnVoltarMenu">Menu</button></div></div>`;
+        document.getElementById('btnVoltarMenu')?.addEventListener('click', telaPerfil);
+    }
+
+    function cancelarOnline() {
+        if (jogoOnline.intervalo) clearInterval(jogoOnline.intervalo);
+        if (jogoOnline.intervaloEspera) clearInterval(jogoOnline.intervaloEspera);
+        const salas = JSON.parse(localStorage.getItem('salas_online') || '{}');
+        delete salas[jogoOnline.salaId];
+        localStorage.setItem('salas_online', JSON.stringify(salas));
+        telaPerfil();
+    }
+
+    for(let i=0;i<8;i++){ const c=document.createElement('div'); c.className='cloud'; c.style.cssText = `width:${70+Math.random()*130}px;height:${25+Math.random()*45}px;top:${Math.random()*100}%;animation-duration:${15+Math.random()*25}s;`; document.body.appendChild(c); }
+    for(let i=0;i<35;i++){ const s=document.createElement('div'); s.className='star'; s.style.cssText = `width:${1+Math.random()*3}px;height:${1+Math.random()*3}px;left:${Math.random()*100}%;top:${Math.random()*100}%;animation-delay:${Math.random()*3}s;`; document.body.appendChild(s); }
+    
+    telaPrincipal();
+</script>
+</body>
+</html>
